@@ -94,8 +94,7 @@ uint8_t Exposer::processByte(uint8_t data)
             switch (data)
             {
                 case REQUEST_ALL:
-                    crc = '<' ^ REQUEST_ALL;
-                    currentState = WAITING_CRC;
+                    currentState = WAITING_TARGET;
                     break;
 
                 case WRITE:
@@ -125,8 +124,16 @@ uint8_t Exposer::processByte(uint8_t data)
         case WAITING_PAYLOAD:
             totalPayload = data;
             payloadLeft = totalPayload;
-            currentState = WAITING_DATA;
             crc ^= data;
+            if (totalPayload > 0)
+            {
+                currentState = WAITING_DATA;
+            }
+            else
+            {
+                currentState = WAITING_CRC;
+            }
+
             break;
 
 
