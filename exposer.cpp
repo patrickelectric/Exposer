@@ -32,7 +32,34 @@ void Exposer::sendByte(uint8_t data)
     Serial.write(data);
 }
 
-void Exposer::sendVariable(uint8_t i)
+void Exposer::sendVariable(uint8_t index)
+{
+    //------------------------------------------------------------------------
+    // HEADER | OPERATION | TARGET | PAYLOADSIZE | PAYLOAD |PAYLOADTYPE| CRC |
+    //------------------------------------------------------------------------
+
+    // this is the only message containing PAYLOADTIME
+    Serial.print("size: ");Serial.println(sizes[registeredTypes[index]]);
+    uint8_t crc = 0;
+    sendByte('<');                              // header
+    sendByte(READ);                             // operation
+    sendByte(index);                            // target variable
+    crc = '<'^ READ ^ index;
+    uint8_t payloadSize = sizes[registeredTypes[index]];
+    sendByte(payloadSize);                           // varsize + type
+    crc = crc ^ (payloadSize);
+
+    for (int j = 0; j < payloadSize; j++)
+    {
+        uint8_t byte = *(uint8_t*)(registeredAdresses[index] + j);
+        sendByte(byte);
+        crc ^= byte;
+    }
+
+    sendByte(crc);                                                                      // crc
+}
+
+void Exposer::sendVariableName(uint8_t i)
 {
 
     //------------------------------------------------------------------------
@@ -70,7 +97,7 @@ void Exposer::sendAllVariables()
 {
     for (int i = 0; i < registerCounter; i++)
     {
-        sendVariable(i);
+        sendVariableName(i);
     }
 }
 
@@ -155,7 +182,7 @@ uint8_t Exposer::processByte(uint8_t data)
                         break;
 
                     case READ:
-
+                        sendVariable(currentTarget);
                         break;
 
                     case WRITE:

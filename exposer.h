@@ -45,12 +45,28 @@ private:
     uint8_t crc = 0;
 
 
+
     void sendAllVariables();
+    void sendVariableName(uint8_t i);
+
+
     void sendVariable(uint8_t i);
+
     void writeVariable(uint8_t target, uint8_t totalPayload, uint8_t* databuffer);
 
     virtual void sendByte(uint8_t data);
 
+    //size of each type below, perhaps should be changed to sizeof(type)
+    uint8_t sizes[7] =          // TODO: Should not be hardcoded
+    {
+        1,
+        2,
+        4,
+        1,
+        2,
+        4,
+        4
+    };
 
 public:
 
