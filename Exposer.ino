@@ -8,7 +8,7 @@ void setup()
 {
 	Serial.begin(115200);
 	pinMode(13, OUTPUT);
-	exposer->registerVariable("batata", Exposer::_uint8_t, &led);
+	exposer->registerVariable(VARNAME(led), Exposer::_uint8_t, &led);
 }
 
 void loop()
