@@ -154,7 +154,7 @@ uint8_t Exposer::processByte(uint8_t data)
 					break;
 
 					case WRITE:
-
+						writeVariable(currentTarget, totalPayload, databuffer);
 					break;
 				}
 			}
@@ -167,5 +167,12 @@ uint8_t Exposer::processByte(uint8_t data)
 		break;
 	}
 
+}
+void Exposer::writeVariable(uint8_t target, uint8_t totalPayload, uint8_t* databuffer)
+{
+	for (int i = 0; i < totalPayload; i++)
+	{
+		* (uint8_t*)registeredAdresses[target+i] = databuffer[i];
+	}
 
 }

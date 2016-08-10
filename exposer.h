@@ -42,9 +42,10 @@ private:
     uint8_t databuffer[10];
     uint8_t crc = 0;
 
-    
+
     void sendAllVariables();
     void sendVariable(uint8_t i);
+    void writeVariable(uint8_t target, uint8_t totalPayload, uint8_t* databuffer);
 
     virtual void sendByte(uint8_t data);
 
