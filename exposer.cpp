@@ -161,12 +161,10 @@ uint8_t Exposer::processByte(uint8_t data)
 					case WRITE:
 
 					break;
-
 				}
 			}
 			else
 			{	
-
 				Serial.println("CRC MISMATCH!");
 			}
 			currentState = WAITING_HEADER;

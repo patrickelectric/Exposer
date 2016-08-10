@@ -66,5 +66,4 @@ public:
     uint8_t processByte(uint8_t data);
     void registerVariable(String name, uint8_t type, void* address);
 
-
 };

@@ -1,6 +1,5 @@
 #include "exposer.h"
 
-
 Exposer* exposer = &Exposer::self();
 
 uint8_t led = 0;
@@ -12,10 +11,8 @@ void setup()
 	exposer->registerVariable("batata", Exposer::_uint8_t, &led);
 }
 
-
 void loop()
 {
-	
 	digitalWrite(13,(led>100));
 	
 	if(Serial.available())
