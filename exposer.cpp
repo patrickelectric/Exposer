@@ -72,7 +72,6 @@ void Exposer::sendAllVariables()
 	Serial.print("Sending all variables! count: "); Serial.println(registerCounter);
 	for(int i = 0; i < registerCounter; i++)
 	{
-		Serial.println(registeredNames[i]);
 		sendVariable(i);
 	}
 }
@@ -87,13 +86,11 @@ uint8_t Exposer::processByte(uint8_t data)
 			if (data == '<')
 			{
 				currentState = WAITING_OPERATION;
-				Serial.println("got header");
 			}
 		break;
 
 
 		case WAITING_OPERATION:
-			Serial.print("got operation ");Serial.println(data);
 			currentOperation = data;
 			switch(data)
 			{
@@ -113,8 +110,6 @@ uint8_t Exposer::processByte(uint8_t data)
 				default:  // something went wrong?
 					currentOperation = 0;
 					currentState = WAITING_HEADER;
-					Serial.println("bad operation!");
-					Serial.println(data);
 				break;
 			}
 			
@@ -124,8 +119,7 @@ uint8_t Exposer::processByte(uint8_t data)
 		case WAITING_TARGET:
 			currentTarget = data;
 			currentState = WAITING_PAYLOAD;
-			crc = data ^ currentOperation;
-			Serial.print("got target");Serial.println(data);
+			crc = '<' ^ currentOperation ^ currentTarget;
 		break;
 
 
