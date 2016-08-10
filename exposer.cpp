@@ -79,9 +79,8 @@ void Exposer::sendAllVariables()
 uint8_t Exposer::processByte(uint8_t data)
 {
 
-	switch(currentState){
-
-
+	switch(currentState)
+	{
 		case Exposer::WAITING_HEADER:
 			if (data == '<')
 			{
