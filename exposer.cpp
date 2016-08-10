@@ -35,11 +35,9 @@ void Exposer::sendByte(uint8_t data)
 void Exposer::sendVariable(uint8_t index)
 {
     //------------------------------------------------------------------------
-    // HEADER | OPERATION | TARGET | PAYLOADSIZE | PAYLOAD |PAYLOADTYPE| CRC |
+    // HEADER | OPERATION | TARGET | PAYLOADSIZE | PAYLOAD | CRC |
     //------------------------------------------------------------------------
 
-    // this is the only message containing PAYLOADTIME
-    Serial.print("size: ");Serial.println(sizes[registeredTypes[index]]);
     uint8_t crc = 0;
     sendByte('<');                              // header
     sendByte(READ);                             // operation
