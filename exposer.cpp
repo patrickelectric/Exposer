@@ -64,7 +64,7 @@ void Exposer::sendVariableName(uint8_t i)
     // HEADER | OPERATION | TARGET | PAYLOADSIZE | PAYLOAD |PAYLOADTYPE| CRC |
     //------------------------------------------------------------------------
 
-    // this is the only message containing PAYLOADTIME
+    // this is the only message containing PAYLOADTYPE
 
     uint8_t crc = 0;
     sendByte('<');                              // header
