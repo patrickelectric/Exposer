@@ -68,8 +68,6 @@ void Exposer::sendVariable(uint8_t i)
 
 void Exposer::sendAllVariables()
 {
-    Serial.print("Sending all variables! count: ");
-    Serial.println(registerCounter);
     for (int i = 0; i < registerCounter; i++)
     {
         sendVariable(i);
