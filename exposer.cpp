@@ -69,15 +69,15 @@ void Exposer::sendVariableName(uint8_t i)
     // this is the only message containing PAYLOADTIME
 
     uint8_t crc = 0;
-    sendByte('<');								// header
-    sendByte(REQUEST_ALL);						// operation
-    sendByte(i);								// target variable
+    sendByte('<');                              // header
+    sendByte(REQUEST_ALL);                      // operation
+    sendByte(i);                                // target variable
     crc = '<'^ REQUEST_ALL ^ i;
-    char buffer[10];							//maximum of 10 chars on variable
+    char buffer[10];                            //maximum of 10 chars on variable
     registeredNames[i].toCharArray(buffer,10);
     buffer[9] = '\0';
     int size = registeredNames[i].length();
-    sendByte(size+1);								// varsize + type
+    sendByte(size+1);                           // varsize + type
     crc = crc ^ (size+1);
 
 
