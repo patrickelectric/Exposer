@@ -123,7 +123,6 @@ uint8_t Exposer::processByte(uint8_t data)
 
 
 		case WAITING_PAYLOAD:
-			Serial.print("got payload size ");Serial.println(data);
 			totalPayload = data;
 			payloadLeft = totalPayload;
 			currentState = WAITING_DATA;
@@ -132,7 +131,6 @@ uint8_t Exposer::processByte(uint8_t data)
 
 
 		case WAITING_DATA:
-			Serial.println("got data!");
 			databuffer[totalPayload-payloadLeft] = data;
 			payloadLeft--;
 			crc ^= data;
@@ -145,8 +143,6 @@ uint8_t Exposer::processByte(uint8_t data)
 		case WAITING_CRC:
 			if (crc == data)
 			{
-				Serial.println("CRC CHECKS!");
-			
 				switch(currentOperation)
 				{
 					case REQUEST_ALL:
