@@ -36,21 +36,23 @@ void Exposer::sendByte(uint8_t data)
 void Exposer::sendVariable(uint8_t i)
 {
 
-	//------------------------------------------------------------
-	// HEADER | OPERATION | TARGET | PAYLOADSIZE | PAYLOAD | CRC |
-	//------------------------------------------------------------
+	//------------------------------------------------------------------------
+	// HEADER | OPERATION | TARGET | PAYLOADSIZE | PAYLOAD |PAYLOADTYPE| CRC |
+	//------------------------------------------------------------------------
+
+	// this is the only message containing PAYLOADTIME
 
 	uint8_t crc = 0;
 	sendByte('<');								// header
 	sendByte(REQUEST_ALL);						// operation
 	sendByte(i);								// target variable
 	crc = '<'^ REQUEST_ALL ^ i;	
-	char buffer[10];
+	char buffer[10];							//maximum of 10 chars on variable
 	registeredNames[i].toCharArray(buffer,10);
 	buffer[9] = '\0';
 	int size = registeredNames[i].length();
-	sendByte(size);								// payloadSize
-	crc = crc ^ size;
+	sendByte(size+1);								// varsize + type
+	crc = crc ^ (size+1);
 	
 
 	for(int j = 0; j < size; j++)
@@ -58,6 +60,10 @@ void Exposer::sendVariable(uint8_t i)
 		sendByte(buffer[j]);
 		crc ^= buffer[j];
 	}
+
+	sendByte(registeredTypes[i]);
+
+	crc ^= registeredTypes[i];
 	sendByte(crc);									// crc
 }	
 
