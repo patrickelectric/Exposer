@@ -2,208 +2,205 @@ import serial
 import time
 import sys
 
-ser = serial.Serial(port='/dev/ttyUSB0',
-                    baudrate=115200,
-                    timeout=0.01)
+class SerialTester():
 
-byte_buffer = bytearray()
+    WAITING_HEADER = 0     # // <
+    WAITING_OPERATION = 1  # // request_All, read, write
+    WAITING_TARGET = 2     # // 0-255. variable register
+    WAITING_PAYLOAD = 3    # // 0-255. data bytes to receive
+    WAITING_DATA = 4       # // data itself
+    WAITING_CRC = 5
 
-def serialize8(a):
-    global byte_buffer
-    if isinstance(a, int):
-        a = chr(a)
-    byte_buffer += a
+    REQUEST_ALL = 33
+    WRITE = 34
+    READ = 35
 
+    databuffer = bytearray()
+    payloadsize = 0
+    payloadLeft = 0
+    crc = 0
+    status = WAITING_HEADER
+    operation = 0
+    target = 0
 
-def serialize16(a):
-    serialize8((a) & 0xFF)
-    serialize8((a >> 8) & 0xFF)
+    types = ["_uint8_t",
+             "_uint16_t",
+             "_uint32_t",
+             "_int8_t",
+             "_int16_t",
+             "_int32_t",
+             "_float,"]
 
+    variables = {}
 
-def serialize32(a):
-    serialize8((a) & 0xFF)
-    serialize8((a >> 8) & 0xFF)
-    serialize8((a >> 16) & 0xFF)
-    serialize8((a >> 24) & 0xFF)
+    messageBuffer = {}
 
-# def serializeFloat(a):
-#     b = struct.pack('<f', a)
-#     for x in xrange(0, 4):
-#         serialize8(b[x])
+    def __init__(self):
+        self.ser = serial.Serial(port='/dev/ttyUSB0',
+                                 baudrate=115200,
+                                 timeout=0.01)
+        self.byte_buffer = bytearray()
 
-def send_16(value):
-    high = chr(value >> 8)
-    low = chr(value % 256)
-    ser.write(low)
-    ser.write(high)
-
-
-def send_8(value):
-    ser.write(chr(value))
-
-
-def packu8(operation, target=None, data=None):
-    global byte_buffer
-    byte_buffer = bytearray()
-    header = ord('<')
-    serialize8(header)
-    serialize8(operation)
-    crc = header ^ operation
-
-    if target is not None:
-        serialize8(target)
-        crc = crc ^ target
-
-    if data is not None:
-        serialize8(len(data))
-        crc = crc ^ len(data)
-        for item in data:
-            crc = crc ^ item
-            serialize8(item)
-
-    serialize8(crc)
-    ser.write(byte_buffer)
+    def serialize8(self, a):
+        if isinstance(a, int):
+            a = chr(a)
+        self.byte_buffer += a
 
 
-WAITING_HEADER = 0  # // <
-WAITING_OPERATION = 1  # // request_All, read, write
-WAITING_TARGET = 2  # // 0-255. variable register
-WAITING_PAYLOAD = 3  # // 0-255. data bytes to receive
-WAITING_DATA = 4  # // data itself
-WAITING_CRC = 5
-
-REQUEST_ALL = 33
-WRITE = 34
-READ = 35
-
-databuffer = bytearray()
-payloadsize = 0
-payloadLeft = 0
-crc = 0
-status = WAITING_HEADER
-operation = 0
-target = 0
-
-types = ["_uint8_t",
-         "_uint16_t",
-         "_uint32_t",
-         "_int8_t",
-         "_int16_t",
-         "_int32_t",
-         "_float,"]
-
-variables = {}
-
-messageBuffer = {}
+    def serialize16(self, a):
+        self.serialize8((a) & 0xFF)
+        self.serialize8((a >> 8) & 0xFF)
 
 
-def waitForMsg(type, target, timeout=0.1):
-    start = time.time()
-    while (type, target) not in messageBuffer.keys():
-        for char in ser.readall():
-            processByte(char)
-        time.sleep(0.001)
-        if (time.time() - start) > timeout:
-            return None
+    def serialize32(self, a):
+        self.serialize8((a) & 0xFF)
+        self.serialize8((a >> 8) & 0xFF)
+        self.serialize8((a >> 16) & 0xFF)
+        self.serialize8((a >> 24) & 0xFF)
 
-    return messageBuffer.pop((type, target), None)
+    # def serializeFloat(a):
+    #     b = struct.pack('<f', a)
+    #     for x in xrange(0, 4):
+    #         serialize8(b[x])
 
+    def send_16(self, value):
+        high = chr(value >> 8)
+        low = chr(value % 256)
+        self.ser.write(low)
+        self.ser.write(high)
 
-def processMessage():
-    global messageBuffer
-    global operation
-    global payloadsize
-    global databuffer
-    operationNames = ["REQUEST ALL", "WRITE", "READ"]
-    operationName = operationNames[operation - 33]
+    def send_8(self, value):
+        self.ser.write(chr(value))
 
-    if operationName == "REQUEST ALL":
-        variables[target] = (databuffer[:-1], types[databuffer[-1]])
-    messageBuffer[(operation, target)] = databuffer
+    def packu8(self, operation, target=None, data=None):
+        self.byte_buffer = bytearray()
+        header = ord('<')
+        self.serialize8(header)
+        self.serialize8(operation)
+        crc = header ^ operation
 
-
-def processByte(char):
-    global databuffer
-    global payloadsize
-    global payloadLeft
-    global crc
-    global status
-    global operation
-    global target
-
-    if status == WAITING_HEADER:
-        if char == '<':
-            status = WAITING_OPERATION
-            crc = 0 ^ ord('<')
-        else:
-            sys.stdout.write(char)
-
-    elif status == WAITING_OPERATION:
-        operation = ord(char)
-
-        if operation in (REQUEST_ALL, READ, WRITE):
-            status = WAITING_TARGET
-            crc = crc ^ operation
-            # print "Op = ", operation
-        else:
-            print "bad operation!", operation
-            status = WAITING_HEADER
-
-    elif status == WAITING_TARGET:
-        target = ord(char)
-        if target in range(50):  # bad validation
-            status = WAITING_PAYLOAD
+        if target is not None:
+            self.serialize8(target)
             crc = crc ^ target
 
-    elif status == WAITING_PAYLOAD:
-        payloadsize = ord(char)
-        payloadLeft = payloadsize
+        if data is not None:
+            self.serialize8(len(data))
+            crc = crc ^ len(data)
+            for item in data:
+                crc = crc ^ item
+                self.serialize8(item)
 
-        databuffer = bytearray()
-        crc = crc ^ payloadsize
-        status = WAITING_DATA
+        self.serialize8(crc)
+        self.ser.write(self.byte_buffer)
 
-    elif status == WAITING_DATA:
-        if payloadLeft > 0:
-            databuffer += char
-            crc = crc ^ ord(char)
-            payloadLeft -= 1
-        if payloadLeft == 0:
-            status = WAITING_CRC
 
-    elif status == WAITING_CRC:
-        if crc == ord(char):
-            processMessage()
+
+    def waitForMsg(self, type, target, timeout=0.2):
+        start = time.time()
+        while (type, target) not in self.messageBuffer.keys():
+            for char in self.ser.readall():
+                self.processByte(char)
+            time.sleep(0.001)
+            if (time.time() - start) > timeout:
+                return None
+        data = self.messageBuffer.pop((type, target), None)
+        return data
+
+
+    def processMessage(self):
+        operationNames = ["REQUEST ALL", "WRITE", "READ"]
+        operationName = operationNames[self.operation - 33]
+
+        if operationName == "REQUEST ALL":
+            self.variables[self.target] = (self.databuffer[:-1], self.types[self.databuffer[-1]])
+
+        if len(self.databuffer) == 1:
+            self.messageBuffer[(self.operation, self.target)] = self.databuffer[0]
         else:
-            print "bad crc!", crc, ord(char)
-        status = WAITING_HEADER
+            self.messageBuffer[(self.operation, self.target)] = self.databuffer
+
+
+    def processByte(self, char):
+        if self.status == self.WAITING_HEADER:
+            if char == '<':
+                self.status = self.WAITING_OPERATION
+                self.crc = 0 ^ ord('<')
+            else:
+                sys.stdout.write(char)
+
+        elif self.status == self.WAITING_OPERATION:
+            self.operation = ord(char)
+
+            if self.operation in (self.REQUEST_ALL, self.READ, self.WRITE):
+                self.status = self.WAITING_TARGET
+                self.crc ^= self.operation
+                # print "Op = ", operation
+            else:
+                print "bad operation!", self.operation
+                self.status = self.WAITING_HEADER
+
+        elif self.status == self.WAITING_TARGET:
+            self.target = ord(char)
+            if self.target in range(50):  # bad validation
+                self.status = self.WAITING_PAYLOAD
+                self.crc ^= self.target
+
+        elif self.status == self.WAITING_PAYLOAD:
+            self.payloadsize = ord(char)
+            self.payloadLeft = self.payloadsize
+
+            self.databuffer = bytearray()
+            self.crc ^= self.payloadsize
+            self.status = self.WAITING_DATA
+
+        elif self.status == self.WAITING_DATA:
+            if self.payloadLeft > 0:
+                self.databuffer += char
+                self.crc ^= ord(char)
+                self.payloadLeft -= 1
+            if self.payloadLeft == 0:
+                self.status = self.WAITING_CRC
+
+        elif self.status == self.WAITING_CRC:
+            if self.crc == ord(char):
+                self.processMessage()
+            else:
+                print "bad crc!", self.crc, ord(char)
+            self.status = self.WAITING_HEADER
 
 
 time.sleep(1)
 
-while len(messageBuffer.keys()) == 0:
-    packu8(REQUEST_ALL, 0, [])
+tester = SerialTester()
 
-    for char in ser.readall():
-        processByte(char)
+tester.packu8(tester.REQUEST_ALL, 0, [])
+
 
 while True:
     # blinking the led, writing, and reading the written data.
-    print "on"
-    packu8(WRITE, 0, [200])
+    print "Turning on, writing 200..."
+    tester.packu8(tester.WRITE, 0, [200])
     time.sleep(1)
-    packu8(READ, 0, [0])
-    data = waitForMsg(READ, 0)
-    time.sleep(1)
+    tester.packu8(tester.READ, 0, [0])
+    print "Reading back..."
+    read = tester.waitForMsg(tester.READ, 0)
+    print "read: ", read
+    if read == 200:
+        print "OK!"
 
-    for char in ser.readall():
-        processByte(char)
+    for char in tester.ser.readall():
+        tester.processByte(char)
 
-    print "off"
-    packu8(WRITE, 0, [0])
+    print "Turning off, writing 0..."
+    tester.packu8(tester.WRITE, 0, [0])
     time.sleep(1)
-    packu8(READ, 0, [0])
-    time.sleep(1)
+    tester.packu8(tester.READ, 0, [0])
+    print "Reading back..."
+    read = tester.waitForMsg(tester.READ, 0)
+    print "read: ", read
 
-    for char in ser.readall():
-        processByte(char)
+    if read == 0:
+        print "OK!"
+
+    for char in tester.ser.readall():
+        tester.processByte(char)
