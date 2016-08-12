@@ -235,8 +235,10 @@ for index, var in comm.variables.iteritems():
     name, vartype = var
     varRange = comm.testValues[vartype]
     for value in varRange:
-        print "sent: ", value, comm.unpack(value, vartype), vartype
+        print "sent: ", value, ", Bytes: ", comm.unpack(value, vartype), ",type: ", vartype
         comm.packu8(comm.WRITE, index, comm.unpack(value, vartype))
         comm.packu8(comm.READ, index, [0])
-
         print "received", comm.waitForMsg(comm.READ, index)
+
+time.sleep(1)
+print comm.ser.readall()
