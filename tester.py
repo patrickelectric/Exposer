@@ -2,21 +2,21 @@ import serial
 import time
 import sys
 
-class SerialTester():
 
-    WAITING_HEADER = 0     # // <
-    WAITING_OPERATION = 1  # // request_All, read, write
-    WAITING_TARGET = 2     # // 0-255. variable register
-    WAITING_PAYLOAD = 3    # // 0-255. data bytes to receive
-    WAITING_DATA = 4       # // data itself
+class SerialTester:
+    WAITING_HEADER = 0     # '<'
+    WAITING_OPERATION = 1  # request_All, read, write
+    WAITING_TARGET = 2     # 0-255. variable register
+    WAITING_PAYLOAD = 3    # 0-255. data bytes to receive
+    WAITING_DATA = 4       # data itself
     WAITING_CRC = 5
 
     REQUEST_ALL = 33
     WRITE = 34
     READ = 35
 
-    databuffer = bytearray()
-    payloadsize = 0
+    dataBuffer = bytearray()
+    payloadSize = 0
     payloadLeft = 0
     crc = 0
     status = WAITING_HEADER
@@ -31,16 +31,14 @@ class SerialTester():
              "_int32_t",
              "_float"]
 
-
-    testValues = {"_uint8_t" : [0, 255],
-             "_uint16_t" : [0, 2352],
-             "_uint32_t" : [0, 2325],
-             "_int8_t" : [-120, 0, 120],
-             "_int16_t" : [-20000, 0, 20000],
-             "_int32_t" : [-(2**30), (2**30)],
-             "_float": [-0.16, 34.12]
-    }
-
+    testValues = {"_uint8_t": [0, 255],
+                  "_uint16_t": [0, 2352],
+                  "_uint32_t": [0, 2325],
+                  "_int8_t": [-120, 0, 120],
+                  "_int16_t": [-20000, 0, 20000],
+                  "_int32_t": [-(2 ** 30), (2 ** 30)],
+                  "_float": [-0.16, 34.12]
+                  }
 
     variables = {}
 
@@ -57,33 +55,23 @@ class SerialTester():
             a = chr(a)
         self.byte_buffer += a
 
-
     def unpack(self, a, vtype):
         if vtype == "_uint8_t":
             return a
         elif vtype == "_uint16_t":
-            return [(a) & 0xFF, (a >> 8) & 0xFF]
+            return [a & 0xFF, (a >> 8) & 0xFF]
         elif vtype == "_uint32_t":
-            return [(a) & 0xFF, (a >> 8) & 0xFF, (a >> 16) & 0xFF, (a >> 24) & 0xFF]
+            return [a & 0xFF, (a >> 8) & 0xFF, (a >> 16) & 0xFF, (a >> 24) & 0xFF]
         elif vtype == "_int8_t":
             return a
         elif vtype == "_int16_t":
-            return [(a) & 0xFF, (a >> 8) & 0xFF]
+            return [a & 0xFF, (a >> 8) & 0xFF]
         elif vtype == "_int32_t":
-            return [(a) & 0xFF, (a >> 8) & 0xFF, (a >> 16) & 0xFF, (a >> 24) & 0xFF]
+            return [a & 0xFF, (a >> 8) & 0xFF, (a >> 16) & 0xFF, (a >> 24) & 0xFF]
         elif vtype == "_float":
             b = struct.pack('<f', a)
-            return [b[i] for i in xrange(0,4)]
+            return [b[i] for i in xrange(0, 4)]
         return
-
-
-    def unpack32(self, a):
-        return
-
-    # def serializeFloat(a):
-    #     b = struct.pack('<f', a)
-    #     for x in xrange(0, 4):
-    #         serialize8(b[x])
 
     def send_16(self, value):
         high = chr(value >> 8)
@@ -112,7 +100,7 @@ class SerialTester():
             size = len(data)
 
             self.serialize8(size)
-            crc = crc ^ size
+            crc ^= size
             for item in data:
                 crc = crc ^ item
                 self.serialize8(item)
@@ -120,24 +108,22 @@ class SerialTester():
         self.serialize8(crc)
         self.ser.write(self.byte_buffer)
 
-
-    def repack(self, data, vtype):
-        if vtype == "_uint8_t":
+    def repack(self, data, varType):
+        if varType == "_uint8_t":
             return data
-        elif vtype == "_uint16_t":
+        elif varType == "_uint16_t":
             return data[0] + (data[1] << 8)
-        elif vtype == "_uint32_t":
+        elif varType == "_uint32_t":
             return data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24)
-        elif vtype == "_int8_t":
+        elif varType == "_int8_t":
             return data
-        elif vtype == "_int16_t":
+        elif varType == "_int16_t":
             return data[0] + (data[1] << 8)
-        elif vtype == "_int32_t":
+        elif varType == "_int32_t":
             return data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24)
-        elif vtype == "_float":
+        elif varType == "_float":
             b = struct.pack('<f', a)
-            return [b[i] for i in xrange(0,4)]
-
+            return [b[i] for i in xrange(0, 4)]
 
     def waitForMsg(self, op, target, timeout=0.2):
         self.messageBuffer.pop((op, target), None)
@@ -151,19 +137,17 @@ class SerialTester():
         data = self.messageBuffer.pop((op, target), None)
         return self.repack(data, self.variables[target][1])
 
-
     def processMessage(self):
         operationNames = ["REQUEST ALL", "WRITE", "READ"]
         operationName = operationNames[self.operation - 33]
 
         if operationName == "REQUEST ALL":
-            self.variables[self.target] = (self.databuffer[:-1], self.types[self.databuffer[-1]])
+            self.variables[self.target] = (self.dataBuffer[:-1], self.types[self.dataBuffer[-1]])
 
-        if len(self.databuffer) == 1:
-            self.messageBuffer[(self.operation, self.target)] = self.databuffer[0]
+        if len(self.dataBuffer) == 1:
+            self.messageBuffer[(self.operation, self.target)] = self.dataBuffer[0]
         else:
-            self.messageBuffer[(self.operation, self.target)] = self.databuffer
-
+            self.messageBuffer[(self.operation, self.target)] = self.dataBuffer
 
     def processByte(self, char):
         if self.status == self.WAITING_HEADER:
@@ -179,7 +163,6 @@ class SerialTester():
             if self.operation in (self.REQUEST_ALL, self.READ, self.WRITE):
                 self.status = self.WAITING_TARGET
                 self.crc ^= self.operation
-                # print "Op = ", operation
             else:
                 print "bad operation!", self.operation
                 self.status = self.WAITING_HEADER
@@ -191,16 +174,16 @@ class SerialTester():
                 self.crc ^= self.target
 
         elif self.status == self.WAITING_PAYLOAD:
-            self.payloadsize = ord(char)
-            self.payloadLeft = self.payloadsize
+            self.payloadSize = ord(char)
+            self.payloadLeft = self.payloadSize
 
-            self.databuffer = bytearray()
-            self.crc ^= self.payloadsize
+            self.dataBuffer = bytearray()
+            self.crc ^= self.payloadSize
             self.status = self.WAITING_DATA
 
         elif self.status == self.WAITING_DATA:
             if self.payloadLeft > 0:
-                self.databuffer += char
+                self.dataBuffer += char
                 self.crc ^= ord(char)
                 self.payloadLeft -= 1
             if self.payloadLeft == 0:
@@ -214,51 +197,20 @@ class SerialTester():
             self.status = self.WAITING_HEADER
 
 
-def blink(tester):
-    # blinking the led, writing, and reading the written data.
-    print "Turning on, writing 200..."
-    tester.packu8(tester.WRITE, 0, [200])
-    time.sleep(1)
-    tester.packu8(tester.READ, 0, [0])
-    print "Reading back..."
-    read = tester.waitForMsg(tester.READ, 0)
-    print "read: ", read
-    if read == 200:
-        print "OK!"
+comm = SerialTester()
 
-    for char in tester.ser.readall():
-        tester.processByte(char)
+while len(comm.variables) == 0:
+    comm.packu8(comm.REQUEST_ALL, 0, [200])
+    comm.waitForMsg(comm.REQUEST_ALL, 0)
 
-    print "Turning off, writing 0..."
-    tester.packu8(tester.WRITE, 0, [0])
-    time.sleep(1)
-    tester.packu8(tester.READ, 0, [0])
-    print "Reading back..."
-    read = tester.waitForMsg(tester.READ, 0)
-    print "read: ", read
-
-    if read == 0:
-        print "OK!"
-
-    for char in tester.ser.readall():
-        tester.processByte(char)
-
-
-tester = SerialTester()
-
-while len(tester.variables) == 0:
-    tester.packu8(tester.REQUEST_ALL, 0, [200])
-    tester.waitForMsg(tester.REQUEST_ALL, 0)
-
-
-for key, value in tester.variables.iteritems():
+for key, value in comm.variables.iteritems():
     print key, value
-for index, var in tester.variables.iteritems():
+for index, var in comm.variables.iteritems():
     name, vartype = var
-    varRange = tester.testValues[vartype]
+    varRange = comm.testValues[vartype]
     for value in varRange:
-        print "sent: ", value, tester.unpack(value, vartype), vartype
-        tester.packu8(tester.WRITE, index, tester.unpack(value, vartype))
-        tester.packu8(tester.READ, index, [0])
+        print "sent: ", value, comm.unpack(value, vartype), vartype
+        comm.packu8(comm.WRITE, index, comm.unpack(value, vartype))
+        comm.packu8(comm.READ, index, [0])
 
-        print "received", tester.waitForMsg(tester.READ, index)
+        print "received", comm.waitForMsg(comm.READ, index)
