@@ -56,18 +56,34 @@ class SerialTester:
         self.byte_buffer += a
 
     def unpack(self, a, vtype):
+
         if vtype == "_uint8_t":
             return a
+
         elif vtype == "_uint16_t":
             return [a & 0xFF, (a >> 8) & 0xFF]
+
         elif vtype == "_uint32_t":
             return [a & 0xFF, (a >> 8) & 0xFF, (a >> 16) & 0xFF, (a >> 24) & 0xFF]
+
         elif vtype == "_int8_t":
+            if a < 0:
+                a = abs(a)
+                a = (~a & 0x00FF) + 1
             return a
+
         elif vtype == "_int16_t":
+            if a < 0:
+                a = abs(a)
+                a = (~a & 0xFFFF) + 1
             return [a & 0xFF, (a >> 8) & 0xFF]
+
         elif vtype == "_int32_t":
+            if a < 0:
+                a = abs(a)
+                a = (~a & 0xFFFFFFFF) + 1
             return [a & 0xFF, (a >> 8) & 0xFF, (a >> 16) & 0xFF, (a >> 24) & 0xFF]
+
         elif vtype == "_float":
             b = struct.pack('<f', a)
             return [ord(b[i]) for i in xrange(0, 4)]
@@ -116,11 +132,21 @@ class SerialTester:
         elif varType == "_uint32_t":
             return data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24)
         elif varType == "_int8_t":
+            if data > 127:
+                data = -2**8 +data
             return data
         elif varType == "_int16_t":
-            return data[0] + (data[1] << 8)
+            data = data[0] + (data[1] << 8)
+            if data > 2**15 - 1:
+                data = - 2 ** 16 + data
+            return data
+
         elif varType == "_int32_t":
-            return data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24)
+            data =  data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24)
+            if data > 2 ** 31 - 1:
+                data = - 2 ** 32 + data
+            return data
+
         elif varType == "_float":
             b = struct.unpack('<f', data)
             return b
