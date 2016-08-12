@@ -29,7 +29,18 @@ class SerialTester():
              "_int8_t",
              "_int16_t",
              "_int32_t",
-             "_float,"]
+             "_float"]
+
+
+    testValues = {"_uint8_t" : [0, 255],
+             "_uint16_t" : [0, 2352],
+             "_uint32_t" : [0, 2325],
+             "_int8_t" : [-120, 0, 120],
+             "_int16_t" : [-20000, 0, 20000],
+             "_int32_t" : [-(2**30), (2**30)],
+             "_float": [-0.16, 34.12]
+    }
+
 
     variables = {}
 
