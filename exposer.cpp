@@ -49,7 +49,7 @@ void Exposer::sendVariable(uint8_t index)
 
     for (int j = 0; j < payloadSize; j++)
     {
-        uint8_t byte = *(uint8_t*)(registeredAdresses[index] + j);
+        uint8_t byte = ((uint8_t*)(registeredAdresses[index]))[j];
         sendByte(byte);
         crc ^= byte;
     }
@@ -202,6 +202,6 @@ void Exposer::writeVariable(uint8_t target, uint8_t totalPayload, uint8_t* datab
 {
     for (int i = 0; i < totalPayload; i++)
     {
-        * (uint8_t*)registeredAdresses[target+i] = databuffer[i];
+        ((uint8_t*)registeredAdresses[target])[i] = databuffer[i];
     }
 }
