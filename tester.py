@@ -1,7 +1,7 @@
 import serial
 import time
 import sys
-
+import struct
 
 class SerialTester:
     WAITING_HEADER = 0     # '<'
@@ -70,7 +70,7 @@ class SerialTester:
             return [a & 0xFF, (a >> 8) & 0xFF, (a >> 16) & 0xFF, (a >> 24) & 0xFF]
         elif vtype == "_float":
             b = struct.pack('<f', a)
-            return [b[i] for i in xrange(0, 4)]
+            return [ord(b[i]) for i in xrange(0, 4)]
         return
 
     def send_16(self, value):
@@ -122,8 +122,8 @@ class SerialTester:
         elif varType == "_int32_t":
             return data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24)
         elif varType == "_float":
-            b = struct.pack('<f', a)
-            return [b[i] for i in xrange(0, 4)]
+            b = struct.unpack('<f', data)
+            return b
 
     def waitForMsg(self, op, target, timeout=0.2):
         self.messageBuffer.pop((op, target), None)
