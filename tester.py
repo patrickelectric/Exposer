@@ -58,16 +58,27 @@ class SerialTester():
         self.byte_buffer += a
 
 
-    def serialize16(self, a):
-        self.serialize8((a) & 0xFF)
-        self.serialize8((a >> 8) & 0xFF)
+    def unpack(self, a, vtype):
+        if vtype == "_uint8_t":
+            return a
+        elif vtype == "_uint16_t":
+            return [(a) & 0xFF, (a >> 8) & 0xFF]
+        elif vtype == "_uint32_t":
+            return [(a) & 0xFF, (a >> 8) & 0xFF, (a >> 16) & 0xFF, (a >> 24) & 0xFF]
+        elif vtype == "_int8_t":
+            return a
+        elif vtype == "_int16_t":
+            return [(a) & 0xFF, (a >> 8) & 0xFF]
+        elif vtype == "_int32_t":
+            return [(a) & 0xFF, (a >> 8) & 0xFF, (a >> 16) & 0xFF, (a >> 24) & 0xFF]
+        elif vtype == "_float":
+            b = struct.pack('<f', a)
+            return [b[i] for i in xrange(0,4)]
+        return
 
 
-    def serialize32(self, a):
-        self.serialize8((a) & 0xFF)
-        self.serialize8((a >> 8) & 0xFF)
-        self.serialize8((a >> 16) & 0xFF)
-        self.serialize8((a >> 24) & 0xFF)
+    def unpack32(self, a):
+        return
 
     # def serializeFloat(a):
     #     b = struct.pack('<f', a)
@@ -95,8 +106,13 @@ class SerialTester():
             crc = crc ^ target
 
         if data is not None:
-            self.serialize8(len(data))
-            crc = crc ^ len(data)
+            if type(data) is int:
+                data = [data]
+
+            size = len(data)
+
+            self.serialize8(size)
+            crc = crc ^ size
             for item in data:
                 crc = crc ^ item
                 self.serialize8(item)
@@ -105,17 +121,35 @@ class SerialTester():
         self.ser.write(self.byte_buffer)
 
 
+    def repack(self, data, vtype):
+        if vtype == "_uint8_t":
+            return data
+        elif vtype == "_uint16_t":
+            return data[0] + (data[1] << 8)
+        elif vtype == "_uint32_t":
+            return data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24)
+        elif vtype == "_int8_t":
+            return data
+        elif vtype == "_int16_t":
+            return data[0] + (data[1] << 8)
+        elif vtype == "_int32_t":
+            return data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24)
+        elif vtype == "_float":
+            b = struct.pack('<f', a)
+            return [b[i] for i in xrange(0,4)]
 
-    def waitForMsg(self, type, target, timeout=0.2):
+
+    def waitForMsg(self, op, target, timeout=0.2):
+        self.messageBuffer.pop((op, target), None)
         start = time.time()
-        while (type, target) not in self.messageBuffer.keys():
+        while (op, target) not in self.messageBuffer.keys():
             for char in self.ser.readall():
                 self.processByte(char)
             time.sleep(0.001)
             if (time.time() - start) > timeout:
                 return None
-        data = self.messageBuffer.pop((type, target), None)
-        return data
+        data = self.messageBuffer.pop((op, target), None)
+        return self.repack(data, self.variables[target][1])
 
 
     def processMessage(self):
@@ -180,14 +214,7 @@ class SerialTester():
             self.status = self.WAITING_HEADER
 
 
-time.sleep(1)
-
-tester = SerialTester()
-
-tester.packu8(tester.REQUEST_ALL, 0, [])
-
-
-while True:
+def blink(tester):
     # blinking the led, writing, and reading the written data.
     print "Turning on, writing 200..."
     tester.packu8(tester.WRITE, 0, [200])
@@ -215,3 +242,23 @@ while True:
 
     for char in tester.ser.readall():
         tester.processByte(char)
+
+
+tester = SerialTester()
+
+while len(tester.variables) == 0:
+    tester.packu8(tester.REQUEST_ALL, 0, [200])
+    tester.waitForMsg(tester.REQUEST_ALL, 0)
+
+
+for key, value in tester.variables.iteritems():
+    print key, value
+for index, var in tester.variables.iteritems():
+    name, vartype = var
+    varRange = tester.testValues[vartype]
+    for value in varRange:
+        print "sent: ", value, tester.unpack(value, vartype), vartype
+        tester.packu8(tester.WRITE, index, tester.unpack(value, vartype))
+        tester.packu8(tester.READ, index, [0])
+
+        print "received", tester.waitForMsg(tester.READ, index)
