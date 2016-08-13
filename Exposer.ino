@@ -12,7 +12,7 @@ int16_t testint16 = 0;
 int32_t testint32 = 0;
 float testfloat = 0;
 
-long next;
+unsigned long next;
 
 void setup()
 {

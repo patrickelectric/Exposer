@@ -83,6 +83,6 @@ public:
 
     static Exposer& self();
 
-    uint8_t processByte(uint8_t data);
+    void processByte(uint8_t data);
     void registerVariable(String name, uint8_t type, void* address);
 };

@@ -50,13 +50,13 @@ void Exposer::sendVariable(uint8_t index)
     sendByte(READ, &crc);
     //target variable
     sendByte(index, &crc);
-    uint8_t payloadSize = m_sizes[m_registeredTypes[index]];
+    const uint8_t payloadSize = m_sizes[m_registeredTypes[index]];
     //varsize + type
     sendByte(payloadSize, &crc);
 
-    for (int j = 0; j < payloadSize; j++)
+    for (uint8_t j = 0, byte; j < payloadSize; j++)
     {
-        uint8_t byte = ((uint8_t*)(m_registeredAdresses[index]))[j];
+        byte = ((uint8_t*)(m_registeredAdresses[index]))[j];
         sendByte(byte, &crc);
     }
 
@@ -72,7 +72,7 @@ void Exposer::sendVariableName(uint8_t i)
     //operation
     sendByte(REQUEST_ALL, &crc);
     sendByte(i, &crc);
-    int size = m_registeredNames[i].length();
+    const uint8_t size = m_registeredNames[i].length();
     // varsize + type
     sendByte(size + 1, &crc);
 
@@ -87,13 +87,13 @@ void Exposer::sendVariableName(uint8_t i)
 
 void Exposer::sendAllVariables()
 {
-    for (int i = 0; i < m_registerCounter; i++)
+    for (uint8_t i = 0; i < m_registerCounter; i++)
     {
         sendVariableName(i);
     }
 }
 
-uint8_t Exposer::processByte(uint8_t data)
+void Exposer::processByte(uint8_t data)
 {
 
     switch (m_currentState)
@@ -189,7 +189,7 @@ uint8_t Exposer::processByte(uint8_t data)
 }
 void Exposer::writeVariable(uint8_t target, uint8_t totalPayload, uint8_t* databuffer)
 {
-    for (int i = 0; i < totalPayload; i++)
+    for (uint8_t i = 0; i < totalPayload; i++)
     {
         ((uint8_t*)m_registeredAdresses[target])[i] = databuffer[i];
     }
