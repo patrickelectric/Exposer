@@ -112,13 +112,7 @@ uint8_t Exposer::processByte(uint8_t data)
             switch (data)
             {
                 case REQUEST_ALL:
-                    m_currentState = WAITING_TARGET;
-                    break;
-
                 case WRITE:
-                    m_currentState = WAITING_TARGET;
-                    break;
-
                 case READ:
                     m_currentState = WAITING_TARGET;
                     break;
