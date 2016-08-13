@@ -68,19 +68,15 @@ void Exposer::sendVariableName(uint8_t i)
     sendByte(m_header, &crc);                              // header
     sendByte(REQUEST_ALL, &crc);                      // operation
     sendByte(i, &crc);                                // target variable
-    char buffer[10];                            //maximum of 10 chars on variable
-    m_registeredNames[i].toCharArray(buffer,10);
-    buffer[9] = '\0';
     int size = m_registeredNames[i].length();
-    sendByte(size+1, &crc);                           // varsize + type
+    sendByte(size + 1, &crc);                           // varsize + type
 
     for (int j = 0; j < size; j++)
     {
-        sendByte(buffer[j], &crc);
+        sendByte(m_registeredNames[i][j], &crc);
     }
 
     sendByte(m_registeredTypes[i], &crc);
-
     sendByte(crc);									// crc
 }
 
