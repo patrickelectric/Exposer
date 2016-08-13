@@ -17,11 +17,8 @@ void Exposer::registerVariable(String name, uint8_t typ, void* address)
 {
     /*
     Must be called like this:
-
     assuming you want to expose the "banana" variable, and it's an uint8_t:
-
     registerVariable(name(banana), Exposer::_uint8_t, &banana)
-
     */
     m_registeredNames[m_registerCounter] = name;
     m_registeredAdresses[m_registerCounter] = address;
@@ -47,11 +44,15 @@ void Exposer::sendVariable(uint8_t index)
     //------------------------------------------------------------------------
 
     uint8_t crc = 0;
-    sendByte(m_header, &crc);                              // header
-    sendByte(READ, &crc);                             // operation
-    sendByte(index, &crc);                            // target variable
+    //header
+    sendByte(m_header, &crc);
+    //operation
+    sendByte(READ, &crc);
+    //target variable
+    sendByte(index, &crc);
     uint8_t payloadSize = m_sizes[m_registeredTypes[index]];
-    sendByte(payloadSize, &crc);                           // varsize + type
+    //varsize + type
+    sendByte(payloadSize, &crc);
 
     for (int j = 0; j < payloadSize; j++)
     {
@@ -59,17 +60,21 @@ void Exposer::sendVariable(uint8_t index)
         sendByte(byte, &crc);
     }
 
-    sendByte(crc);                                 // crc
+    sendByte(crc);
 }
 
 void Exposer::sendVariableName(uint8_t i)
 {
     uint8_t crc = 0;
-    sendByte(m_header, &crc);                              // header
-    sendByte(REQUEST_ALL, &crc);                      // operation
-    sendByte(i, &crc);                                // target variable
+
+    //header
+    sendByte(m_header, &crc);
+    //operation
+    sendByte(REQUEST_ALL, &crc);
+    sendByte(i, &crc);
     int size = m_registeredNames[i].length();
-    sendByte(size + 1, &crc);                           // varsize + type
+    // varsize + type
+    sendByte(size + 1, &crc);
 
     for (int j = 0; j < size; j++)
     {
@@ -77,7 +82,7 @@ void Exposer::sendVariableName(uint8_t i)
     }
 
     sendByte(m_registeredTypes[i], &crc);
-    sendByte(crc);									// crc
+    sendByte(crc);
 }
 
 void Exposer::sendAllVariables()
@@ -111,7 +116,8 @@ uint8_t Exposer::processByte(uint8_t data)
                     m_currentState = WAITING_TARGET;
                     break;
 
-                default:  // something went wrong?
+                // something went wrong?
+                default:
                     m_currentOperation = 0;
                     m_currentState = WAITING_HEADER;
                     break;

@@ -37,7 +37,6 @@ private:
         READ
     };
 
-
     uint8_t m_currentState = WAITING_HEADER;
     uint8_t m_currentOperation = 0;
     uint8_t m_currentTarget = 0;
@@ -57,7 +56,8 @@ private:
     virtual void sendByte(uint8_t data);
 
     //size of each type below, perhaps should be changed to sizeof(type)
-    uint8_t m_sizes[7] =          // TODO: Should not be hardcoded
+    //TODO: Should not be hardcoded
+    uint8_t m_sizes[7] =
     {
         1,
         2,
