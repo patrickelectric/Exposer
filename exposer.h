@@ -13,12 +13,12 @@ private:
     Exposer(const Exposer& other) = delete;
     Exposer();
 
-    void* registeredAdresses[MAX_VARS];
-    String  registeredNames[MAX_VARS];
-    uint8_t  registeredTypes[MAX_VARS];
-    uint8_t  registerCounter = 0;
+    void* m_registeredAdresses[MAX_VARS];
+    String  m_registeredNames[MAX_VARS];
+    uint8_t  m_registeredTypes[MAX_VARS];
+    uint8_t  m_registerCounter = 0;
     //const is used to force compiler to add variable in .text only one time
-    static const uint8_t header; 
+    static const uint8_t m_header;
 
     enum
     {
@@ -38,13 +38,13 @@ private:
     };
 
 
-    uint8_t currentState = WAITING_HEADER;
-    uint8_t currentOperation = 0;
-    uint8_t currentTarget = 0;
-    uint8_t payloadLeft = 0;
-    uint8_t totalPayload = 0;
-    uint8_t databuffer[10];
-    uint8_t crc = 0;
+    uint8_t m_currentState = WAITING_HEADER;
+    uint8_t m_currentOperation = 0;
+    uint8_t m_currentTarget = 0;
+    uint8_t m_payloadLeft = 0;
+    uint8_t m_totalPayload = 0;
+    uint8_t m_databuffer[10];
+    uint8_t m_crc = 0;
 
     void sendAllVariables();
     void sendVariableName(uint8_t i);
@@ -56,7 +56,7 @@ private:
     virtual void sendByte(uint8_t data);
 
     //size of each type below, perhaps should be changed to sizeof(type)
-    uint8_t sizes[7] =          // TODO: Should not be hardcoded
+    uint8_t m_sizes[7] =          // TODO: Should not be hardcoded
     {
         1,
         2,
