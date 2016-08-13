@@ -61,13 +61,6 @@ void Exposer::sendVariable(uint8_t index)
 
 void Exposer::sendVariableName(uint8_t i)
 {
-
-    //------------------------------------------------------------------------
-    // HEADER | OPERATION | TARGET | PAYLOADSIZE | PAYLOAD |PAYLOADTYPE| CRC |
-    //------------------------------------------------------------------------
-
-    // this is the only message containing PAYLOADTYPE
-
     uint8_t crc = 0;
     sendByte(m_header);                              // header
     sendByte(REQUEST_ALL);                      // operation
