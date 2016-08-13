@@ -53,6 +53,7 @@ private:
 
     void writeVariable(uint8_t target, uint8_t totalPayload, uint8_t* databuffer);
 
+    void sendByte(uint8_t data, uint8_t* crc);
     virtual void sendByte(uint8_t data);
 
     //size of each type below, perhaps should be changed to sizeof(type)

@@ -29,6 +29,12 @@ void Exposer::registerVariable(String name, uint8_t typ, void* address)
     m_registerCounter++;
 }
 
+void Exposer::sendByte(uint8_t data, uint8_t* crc)
+{
+    *crc ^= data;
+    sendByte(data);
+}
+
 void Exposer::sendByte(uint8_t data)
 {
     Serial.write(data);
@@ -41,48 +47,40 @@ void Exposer::sendVariable(uint8_t index)
     //------------------------------------------------------------------------
 
     uint8_t crc = 0;
-    sendByte(m_header);                              // header
-    sendByte(READ);                             // operation
-    sendByte(index);                            // target variable
-    crc = m_header ^ READ ^ index;
+    sendByte(m_header, &crc);                              // header
+    sendByte(READ, &crc);                             // operation
+    sendByte(index, &crc);                            // target variable
     uint8_t payloadSize = m_sizes[m_registeredTypes[index]];
-    sendByte(payloadSize);                           // varsize + type
-    crc = crc ^ (payloadSize);
+    sendByte(payloadSize, &crc);                           // varsize + type
 
     for (int j = 0; j < payloadSize; j++)
     {
         uint8_t byte = ((uint8_t*)(m_registeredAdresses[index]))[j];
-        sendByte(byte);
-        crc ^= byte;
+        sendByte(byte, &crc);
     }
 
-    sendByte(crc);                                                                      // crc
+    sendByte(crc);                                 // crc
 }
 
 void Exposer::sendVariableName(uint8_t i)
 {
     uint8_t crc = 0;
-    sendByte(m_header);                              // header
-    sendByte(REQUEST_ALL);                      // operation
-    sendByte(i);                                // target variable
-    crc = m_header ^ REQUEST_ALL ^ i;
+    sendByte(m_header, &crc);                              // header
+    sendByte(REQUEST_ALL, &crc);                      // operation
+    sendByte(i, &crc);                                // target variable
     char buffer[10];                            //maximum of 10 chars on variable
     m_registeredNames[i].toCharArray(buffer,10);
     buffer[9] = '\0';
     int size = m_registeredNames[i].length();
-    sendByte(size+1);                           // varsize + type
-    crc = crc ^ (size+1);
-
+    sendByte(size+1, &crc);                           // varsize + type
 
     for (int j = 0; j < size; j++)
     {
-        sendByte(buffer[j]);
-        crc ^= buffer[j];
+        sendByte(buffer[j], &crc);
     }
 
-    sendByte(m_registeredTypes[i]);
+    sendByte(m_registeredTypes[i], &crc);
 
-    crc ^= m_registeredTypes[i];
     sendByte(crc);									// crc
 }
 
