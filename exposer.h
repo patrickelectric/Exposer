@@ -5,9 +5,9 @@
 #define VARNAME(x) (#x)
 #define MAX_VARS 10
 
-
 class Exposer
 {
+
 private:
     Exposer& operator = (Exposer& other) = delete;
     Exposer(const Exposer& other) = delete;
@@ -17,6 +17,8 @@ private:
     String  registeredNames[MAX_VARS];
     uint8_t  registeredTypes[MAX_VARS];
     uint8_t  registerCounter = 0;
+    //const is used to force compiler to add variable in .text only one time
+    static const uint8_t header; 
 
     enum
     {
@@ -44,11 +46,8 @@ private:
     uint8_t databuffer[10];
     uint8_t crc = 0;
 
-
-
     void sendAllVariables();
     void sendVariableName(uint8_t i);
-
 
     void sendVariable(uint8_t i);
 

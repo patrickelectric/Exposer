@@ -1,5 +1,7 @@
 #include "exposer.h"
 
+const uint8_t Exposer::header = '<';
+
 Exposer::Exposer()
 {
     Serial.begin(115200);
@@ -39,10 +41,10 @@ void Exposer::sendVariable(uint8_t index)
     //------------------------------------------------------------------------
 
     uint8_t crc = 0;
-    sendByte('<');                              // header
+    sendByte(header);                              // header
     sendByte(READ);                             // operation
     sendByte(index);                            // target variable
-    crc = '<'^ READ ^ index;
+    crc = header ^ READ ^ index;
     uint8_t payloadSize = sizes[registeredTypes[index]];
     sendByte(payloadSize);                           // varsize + type
     crc = crc ^ (payloadSize);
@@ -67,10 +69,10 @@ void Exposer::sendVariableName(uint8_t i)
     // this is the only message containing PAYLOADTYPE
 
     uint8_t crc = 0;
-    sendByte('<');                              // header
+    sendByte(header);                              // header
     sendByte(REQUEST_ALL);                      // operation
     sendByte(i);                                // target variable
-    crc = '<'^ REQUEST_ALL ^ i;
+    crc = header ^ REQUEST_ALL ^ i;
     char buffer[10];                            //maximum of 10 chars on variable
     registeredNames[i].toCharArray(buffer,10);
     buffer[9] = '\0';
@@ -105,7 +107,7 @@ uint8_t Exposer::processByte(uint8_t data)
     switch (currentState)
     {
         case Exposer::WAITING_HEADER:
-            if (data == '<')
+            if (data == header)
             {
                 currentState = WAITING_OPERATION;
             }
@@ -140,7 +142,7 @@ uint8_t Exposer::processByte(uint8_t data)
         case WAITING_TARGET:
             currentTarget = data;
             currentState = WAITING_PAYLOAD;
-            crc = '<' ^ currentOperation ^ currentTarget;
+            crc = header ^ currentOperation ^ currentTarget;
             break;
 
 
