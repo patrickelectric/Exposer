@@ -76,9 +76,9 @@ void Exposer::sendVariableName(uint8_t i)
     // varsize + type
     sendByte(size + 1, &crc);
 
-    for (int j = 0; j < size; j++)
+    for (const auto byte: m_registeredNames[i])
     {
-        sendByte(m_registeredNames[i][j], &crc);
+        sendByte(byte, &crc);
     }
 
     sendByte(m_registeredTypes[i], &crc);
