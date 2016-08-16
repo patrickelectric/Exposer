@@ -148,7 +148,7 @@ class SerialTester:
             return data
 
         elif varType == "_float":
-            b = struct.unpack('<f', data)
+            b = struct.unpack('<f', str(data))
             return b[0]
 
     def waitForMsg(self, op, target, timeout=0.2):
@@ -249,7 +249,4 @@ if __name__ == "__main__":
             print ((value - received) < 0.01), ", Type: ", vartype, "sent: ", value, "received: ", received, ", Bytes: ", comm.unpack(value, vartype)
             if (value - received) > 0.01:
                 errors += 1
-
     exit(errors)
-    time.sleep(1)
-    print comm.ser.readall()
