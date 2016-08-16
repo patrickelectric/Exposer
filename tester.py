@@ -149,7 +149,7 @@ class SerialTester:
 
         elif varType == "_float":
             b = struct.unpack('<f', data)
-            return b
+            return b[0]
 
     def waitForMsg(self, op, target, timeout=0.2):
         self.messageBuffer.pop((op, target), None)
