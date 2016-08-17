@@ -44,8 +44,8 @@ class SerialTester:
 
     messageBuffer = {}
 
-    def __init__(self):
-        self.ser = serial.Serial(port='/dev/ttyUSB0',
+    def __init__(self, port):
+        self.ser = serial.Serial(port=port,
                                  baudrate=115200,
                                  timeout=0.01)
         self.byte_buffer = bytearray()
@@ -148,8 +148,8 @@ class SerialTester:
             return data
 
         elif varType == "_float":
-            b = struct.unpack('<f', data)
-            return b
+            b = struct.unpack('<f', str(data))
+            return b[0]
 
     def waitForMsg(self, op, target, timeout=0.2):
         self.messageBuffer.pop((op, target), None)
@@ -223,22 +223,30 @@ class SerialTester:
             self.status = self.WAITING_HEADER
 
 
-comm = SerialTester()
+if __name__ == "__main__":
+    errors = 0
 
-while len(comm.variables) == 0:
-    comm.packu8(comm.REQUEST_ALL, 0, [200])
-    comm.waitForMsg(comm.REQUEST_ALL, 0)
+    if len(sys.argv) == 2:
+        port = sys.argv[1]
+    else:
+        port = "/dev/ttyUSB0"
+    comm = SerialTester(port)
 
-for key, value in comm.variables.iteritems():
-    print key, value
-for index, var in comm.variables.iteritems():
-    name, vartype = var
-    varRange = comm.testValues[vartype]
-    for value in varRange:
-        print "sent: ", value, ", Bytes: ", comm.unpack(value, vartype), ",type: ", vartype
-        comm.packu8(comm.WRITE, index, comm.unpack(value, vartype))
-        comm.packu8(comm.READ, index, [0])
-        print "received", comm.waitForMsg(comm.READ, index)
+    while len(comm.variables) == 0:
+        comm.packu8(comm.REQUEST_ALL, 0, [200])
+        comm.waitForMsg(comm.REQUEST_ALL, 0)
 
-time.sleep(1)
-print comm.ser.readall()
+    for key, value in comm.variables.iteritems():
+        print key, value
+    for index, var in comm.variables.iteritems():
+        name, vartype = var
+        varRange = comm.testValues[vartype]
+
+        for value in varRange:
+            comm.packu8(comm.WRITE, index, comm.unpack(value, vartype))
+            comm.packu8(comm.READ, index, [0])
+            received = comm.waitForMsg(comm.READ, index)
+            print ((value - received) < 0.01), ", Type: ", vartype, "sent: ", value, "received: ", received, ", Bytes: ", comm.unpack(value, vartype)
+            if (value - received) > 0.01:
+                errors += 1
+    exit(errors)
