@@ -98,28 +98,26 @@ class SerialTester:
     def send_8(self, value):
         self.ser.write(chr(value))
 
-    def packu8(self, operation, target=None, data=None):
+    def packu8(self, operation, target=0, data=[]):
         self.byte_buffer = bytearray()
         header = ord('<')
         self.serialize8(header)
         self.serialize8(operation)
         crc = header ^ operation
 
-        if target is not None:
-            self.serialize8(target)
-            crc = crc ^ target
+        self.serialize8(target)
+        crc ^= target
 
-        if data is not None:
-            if type(data) is int:
-                data = [data]
+        if type(data) is int:
+            data = [data]
 
-            size = len(data)
+        size = len(data)
 
-            self.serialize8(size)
-            crc ^= size
-            for item in data:
-                crc = crc ^ item
-                self.serialize8(item)
+        self.serialize8(size)
+        crc ^= size
+        for item in data:
+            crc ^= item
+            self.serialize8(item)
 
         self.serialize8(crc)
         self.ser.write(self.byte_buffer)
@@ -233,7 +231,7 @@ if __name__ == "__main__":
     comm = SerialTester(port)
 
     while len(comm.variables) == 0:
-        comm.packu8(comm.REQUEST_ALL, 0, [200])
+        comm.packu8(comm.REQUEST_ALL)
         comm.waitForMsg(comm.REQUEST_ALL, 0)
 
     for key, value in comm.variables.iteritems():
