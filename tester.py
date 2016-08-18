@@ -106,7 +106,7 @@ class SerialTester:
         crc = header ^ operation
 
         self.serialize8(target)
-        crc = crc ^ target
+        crc ^= target
 
         if type(data) is int:
             data = [data]
@@ -116,7 +116,7 @@ class SerialTester:
         self.serialize8(size)
         crc ^= size
         for item in data:
-            crc = crc ^ item
+            crc ^= item
             self.serialize8(item)
 
         self.serialize8(crc)
