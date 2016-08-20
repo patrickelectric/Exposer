@@ -27,7 +27,6 @@ void setup()
     exposer->registerVariable(VARNAME(testint32), Exposer::_int32_t, &testint32);
     exposer->registerVariable(VARNAME(testfloat), Exposer::_float, &testfloat);
 
-
     next = millis()+1000;
 }
 
@@ -36,11 +35,8 @@ void loop()
 
     digitalWrite(13,(testint8==-50));
 
-    if (Serial.available())
-    {
-        uint8_t data = Serial.read();
-        exposer->processByte(data);
-    }
+    exposer->update();
+
     if (millis()>next){
         Serial.print("uint8:");Serial.println(testuint8);
         Serial.print("uint16:");Serial.println(testuint16);
