@@ -44,6 +44,7 @@ private:
     uint8_t m_totalPayload = 0;
     uint8_t m_databuffer[10];
     uint8_t m_crc = 0;
+    HardwareSerial* m_serial = &Serial;
 
     void sendAllVariables();
     void sendVariableName(uint8_t i);
@@ -83,6 +84,8 @@ public:
 
     static Exposer& self();
 
+    void update();
+    void setSerial(HardwareSerial& serial);
     void processByte(uint8_t data);
     void registerVariable(String name, uint8_t type, void* address);
 };

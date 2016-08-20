@@ -4,7 +4,11 @@ const uint8_t Exposer::m_header = '<';
 
 Exposer::Exposer()
 {
-    Serial.begin(115200);
+}
+
+void Exposer::setSerial(HardwareSerial& serial)
+{
+    m_serial = &serial;
 }
 
 Exposer& Exposer::self()
@@ -34,7 +38,7 @@ void Exposer::sendByte(uint8_t data, uint8_t* crc)
 
 void Exposer::sendByte(uint8_t data)
 {
-    Serial.write(data);
+    m_serial->write(data);
 }
 
 void Exposer::sendVariable(uint8_t index)
@@ -90,6 +94,14 @@ void Exposer::sendAllVariables()
     for (uint8_t i = 0; i < m_registerCounter; i++)
     {
         sendVariableName(i);
+    }
+}
+
+void Exposer::update()
+{
+    while (m_serial->available())
+    {
+        processByte(m_serial->read());
     }
 }
 
@@ -179,7 +191,7 @@ void Exposer::processByte(uint8_t data)
             }
             else
             {
-                Serial.println("CRC MISMATCH!");
+                m_serial->println("CRC MISMATCH!");
             }
             m_currentState = WAITING_HEADER;
 
