@@ -56,17 +56,15 @@ private:
     void sendByte(uint8_t data, uint8_t* crc);
     virtual void sendByte(uint8_t data);
 
-    //size of each type below, perhaps should be changed to sizeof(type)
-    //TODO: Should not be hardcoded
     uint8_t m_sizes[7] =
     {
-        1,
-        2,
-        4,
-        1,
-        2,
-        4,
-        4
+        sizeof(uint8_t),
+        sizeof(uint16_t),
+        sizeof(uint32_t),
+        sizeof(int8_t),
+        sizeof(int16_t),
+        sizeof(int32_t),
+        sizeof(float),
     };
 
 public:
