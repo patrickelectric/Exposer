@@ -78,6 +78,7 @@ public:
         _int16_t,
         _int32_t,
         _float,
+        _string
     };
 
     static Exposer& self();

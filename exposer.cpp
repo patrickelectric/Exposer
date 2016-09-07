@@ -54,13 +54,29 @@ void Exposer::sendVariable(uint8_t index)
     sendByte(READ, &crc);
     //target variable
     sendByte(index, &crc);
-    const uint8_t payloadSize = m_sizes[m_registeredTypes[index]];
+    uint8_t payloadSize;
+    if (m_registeredTypes[index] != _string)
+    {
+        payloadSize = m_sizes[m_registeredTypes[index]];
+    }
+    else
+    {
+        payloadSize = ((String*)m_registeredAdresses[index])->length();
+    }
+
     //varsize + type
     sendByte(payloadSize, &crc);
 
     for (uint8_t j = 0, byte; j < payloadSize; j++)
     {
-        byte = ((uint8_t*)(m_registeredAdresses[index]))[j];
+        if (m_registeredTypes[index] != _string)
+        {
+            byte = ((uint8_t*)(m_registeredAdresses[index]))[j];
+        }
+        else
+        {
+            byte = ((String*)(m_registeredAdresses[index]))[0][j];
+        }
         sendByte(byte, &crc);
     }
 
@@ -201,8 +217,20 @@ void Exposer::processByte(uint8_t data)
 }
 void Exposer::writeVariable(uint8_t target, uint8_t totalPayload, uint8_t* databuffer)
 {
+    if (m_registeredTypes[target] == _string)
+    {
+        ((String*)(m_registeredAdresses[target]))[0] = String();
+    }
+
     for (uint8_t i = 0; i < totalPayload; i++)
     {
-        ((uint8_t*)m_registeredAdresses[target])[i] = databuffer[i];
+        if (m_registeredTypes[target] != _string)
+        {
+            ((uint8_t*)m_registeredAdresses[target])[i] = databuffer[i];
+        }
+        else
+        {
+            ((String*)(m_registeredAdresses[target]))[0] = ((String*)(m_registeredAdresses[target]))[0] + String(((char)databuffer[i]));
+        }
     }
 }
