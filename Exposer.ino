@@ -11,6 +11,7 @@ int8_t testint8 = 0;
 int16_t testint16 = 0;
 int32_t testint32 = 0;
 float testfloat = 0;
+String teststring = "Batata";
 
 unsigned long next;
 
@@ -26,6 +27,7 @@ void setup()
     exposer->registerVariable(VARNAME(testint16), Exposer::_int16_t, &testint16);
     exposer->registerVariable(VARNAME(testint32), Exposer::_int32_t, &testint32);
     exposer->registerVariable(VARNAME(testfloat), Exposer::_float, &testfloat);
+    exposer->registerVariable(VARNAME(teststring), Exposer::_string, &teststring);
 
     next = millis()+1000;
 }
@@ -45,6 +47,7 @@ void loop()
         Serial.print("int16:");Serial.println(testint16);
         Serial.print("int32:");Serial.println(testint32);
         Serial.print("float:");Serial.println(testfloat);
+        Serial.print("string:");Serial.println(teststring);
         next = millis()+1000;
     }
 

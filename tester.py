@@ -29,7 +29,8 @@ class SerialTester:
              "_int8_t",
              "_int16_t",
              "_int32_t",
-             "_float"]
+             "_float",
+             "_string"]
 
     testValues = {"_uint8_t": [0, 255],
                   "_uint16_t": [0, 2352],
@@ -37,7 +38,8 @@ class SerialTester:
                   "_int8_t": [-120, 0, -120],
                   "_int16_t": [-20000, 0, -20000],
                   "_int32_t": [-(2 ** 30), (2 ** 30), -30000],
-                  "_float": [-0.16, 34.12]
+                  "_float": [-0.16, 34.12],
+                  "_string": ["batatadoce", "lorem ipsum dolor sit amet"],
                   }
 
     variables = {}
@@ -87,6 +89,9 @@ class SerialTester:
         elif vtype == "_float":
             b = struct.pack('<f', a)
             return [ord(b[i]) for i in xrange(0, 4)]
+
+        elif vtype == "_string":
+            return [b for b in bytearray(a)]
         return
 
     def send_16(self, value):
@@ -148,6 +153,8 @@ class SerialTester:
         elif varType == "_float":
             b = struct.unpack('<f', str(data))
             return b[0]
+        elif varType == "_string":
+            return data
 
     def waitForMsg(self, op, target, timeout=0.2):
         self.messageBuffer.pop((op, target), None)
@@ -244,7 +251,12 @@ if __name__ == "__main__":
             comm.packu8(comm.WRITE, index, comm.unpack(value, vartype))
             comm.packu8(comm.READ, index, [0])
             received = comm.waitForMsg(comm.READ, index)
-            print ((value - received) < 0.01), ", Type: ", vartype, "sent: ", value, "received: ", received, ", Bytes: ", comm.unpack(value, vartype)
-            if (value - received) > 0.01:
-                errors += 1
+            if vartype != "_string":
+                print ((value - received) < 0.01), ", Type: ", vartype, "sent: ", value, "received: ", received, ", Bytes: ", comm.unpack(value, vartype)
+                if (value - received) > 0.01:
+                    errors += 1
+            else:
+                print value, received
+                if value != received:
+                    errors += 1
     exit(errors)

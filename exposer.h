@@ -42,7 +42,7 @@ private:
     uint8_t m_currentTarget = 0;
     uint8_t m_payloadLeft = 0;
     uint8_t m_totalPayload = 0;
-    uint8_t m_databuffer[10];
+    uint8_t m_databuffer[30];
     uint8_t m_crc = 0;
     HardwareSerial* m_serial = &Serial;
 
@@ -56,17 +56,15 @@ private:
     void sendByte(uint8_t data, uint8_t* crc);
     virtual void sendByte(uint8_t data);
 
-    //size of each type below, perhaps should be changed to sizeof(type)
-    //TODO: Should not be hardcoded
     uint8_t m_sizes[7] =
     {
-        1,
-        2,
-        4,
-        1,
-        2,
-        4,
-        4
+        sizeof(uint8_t),
+        sizeof(uint16_t),
+        sizeof(uint32_t),
+        sizeof(int8_t),
+        sizeof(int16_t),
+        sizeof(int32_t),
+        sizeof(float),
     };
 
 public:
@@ -80,6 +78,7 @@ public:
         _int16_t,
         _int32_t,
         _float,
+        _string
     };
 
     static Exposer& self();
