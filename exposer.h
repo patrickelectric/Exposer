@@ -42,7 +42,7 @@ private:
     uint8_t m_currentTarget = 0;
     uint8_t m_payloadLeft = 0;
     uint8_t m_totalPayload = 0;
-    uint8_t m_databuffer[10];
+    uint8_t m_databuffer[30];
     uint8_t m_crc = 0;
     HardwareSerial* m_serial = &Serial;
 
