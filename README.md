@@ -1,4 +1,4 @@
-# Exposer [![Build Status](https://travis-ci.org/Williangalvani/Exposer.svg)](https://travis-ci.org/Williangalvani/Exposer)
+# Exposer [![Build Status](https://travis-ci.org/robotadasufsc/Exposer.svg?branch=dev)](https://travis-ci.org/Williangalvani/Exposer)
 ---
 An Arduino Library to enable changing variables via serial communication.
 
