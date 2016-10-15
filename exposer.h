@@ -32,9 +32,9 @@ private:
 
     enum
     {
-        REQUEST_ALL = 33,
-        WRITE,
-        READ
+        REQUEST_ALL = 33,   // !
+        WRITE,              // "
+        READ,               // #
     };
 
     uint8_t m_currentState = WAITING_HEADER;
