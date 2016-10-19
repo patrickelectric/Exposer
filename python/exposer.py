@@ -191,6 +191,25 @@ class SerialExposer:
             self.packu8(self.REQUEST_ALL)
             self.waitForMsg(self.REQUEST_ALL, 0)
 
+    def getVarNames(self):
+        return [a[1][0].decode("UTF-8") for a in self.variables.items()]
+
+    def setVar(self,varname,value):
+        for i, var in self.variables.items():
+            name, typ = var
+            if name == varname:
+                self.packu8(self.WRITE, i, self.unpack(value, typ))
+
+    def getVar(self,varname):
+        varname = varname.encode("UTF-8")
+        for i, var in self.variables.items():
+            name, typ = var
+            if name == varname:
+                self.packu8(self.READ, i, [0])
+                received = self.waitForMsg(self.READ, i)
+                #print(i,received)
+                return received
+
     def processMessage(self):
         operationNames = ["REQUEST ALL", "WRITE", "READ"]
         operationName = operationNames[self.operation - 33]
