@@ -3,7 +3,9 @@ import time
 import sys
 import struct
 
-class SerialTester:
+xrange = range
+
+class SerialExposer:
     WAITING_HEADER = 0     # '<'
     WAITING_OPERATION = 1  # request_All, read, write
     WAITING_TARGET = 2     # 0-255. variable register
@@ -55,7 +57,12 @@ class SerialTester:
     def serialize8(self, a):
         if isinstance(a, int):
             a = chr(a)
-        self.byte_buffer += a
+        try:
+            self.byte_buffer += a
+        except TypeError:
+            #print("a", ord(a), a, bytearray([ord(a)]))
+            self.byte_buffer += bytearray([ord(a)]) 
+        #print(self.byte_buffer)
 
     def unpack(self, a, vtype):
 
@@ -88,10 +95,13 @@ class SerialTester:
 
         elif vtype == "_float":
             b = struct.pack('<f', a)
-            return [ord(b[i]) for i in xrange(0, 4)]
-
+            try:
+                return [b[i] for i in xrange(0, 4)]
+            except TypeError: 
+                return [ord(b[i]) for i in xrange(0, 4)]
+            
         elif vtype == "_string":
-            return [b for b in bytearray(a)]
+            return [b for b in a.encode("UTF-8")]
         return
 
     def send_16(self, value):
@@ -121,10 +131,15 @@ class SerialTester:
         self.serialize8(size)
         crc ^= size
         for item in data:
-            crc ^= item
+            try:
+                crc ^= item
+            except:
+                crc ^= ord(item)
+
             self.serialize8(item)
 
         self.serialize8(crc)
+        #print(self.byte_buffer, [a for a in self.byte_buffer])
         self.ser.write(self.byte_buffer)
 
     def repack(self, data, varType):
@@ -151,10 +166,13 @@ class SerialTester:
             return data
 
         elif varType == "_float":
-            b = struct.unpack('<f', str(data))
+            try:
+                b = struct.unpack('<f', str(data))
+            except TypeError:
+                b = struct.unpack('<f', data) 
             return b[0]
         elif varType == "_string":
-            return data
+            return data.decode("UTF-8")
 
     def waitForMsg(self, op, target, timeout=0.2):
         self.messageBuffer.pop((op, target), None)
@@ -167,6 +185,11 @@ class SerialTester:
                 return None
         data = self.messageBuffer.pop((op, target), None)
         return self.repack(data, self.variables[target][1])
+
+    def requestAll(self):
+        while len(self.variables) == 0:
+            self.packu8(self.REQUEST_ALL)
+            self.waitForMsg(self.REQUEST_ALL, 0)
 
     def processMessage(self):
         operationNames = ["REQUEST ALL", "WRITE", "READ"]
@@ -181,31 +204,35 @@ class SerialTester:
             self.messageBuffer[(self.operation, self.target)] = self.dataBuffer
 
     def processByte(self, char):
+        #print(self.status)
+        if not type(char) is int:
+            char = ord(char)
         if self.status == self.WAITING_HEADER:
-            if char == '<':
+            if char == ord('<'):
                 self.status = self.WAITING_OPERATION
                 self.crc = 0 ^ ord('<')
             else:
-                sys.stdout.write(char)
+                pass
+                #sys.stdout.write(chr(char))
 
         elif self.status == self.WAITING_OPERATION:
-            self.operation = ord(char)
+            self.operation = char
 
             if self.operation in (self.REQUEST_ALL, self.READ, self.WRITE):
                 self.status = self.WAITING_TARGET
                 self.crc ^= self.operation
             else:
-                print "bad operation!", self.operation
+                print ("bad operation!", self.operation)
                 self.status = self.WAITING_HEADER
 
         elif self.status == self.WAITING_TARGET:
-            self.target = ord(char)
+            self.target = char
             if self.target in range(50):  # bad validation
                 self.status = self.WAITING_PAYLOAD
                 self.crc ^= self.target
 
         elif self.status == self.WAITING_PAYLOAD:
-            self.payloadSize = ord(char)
+            self.payloadSize = char
             self.payloadLeft = self.payloadSize
 
             self.dataBuffer = bytearray()
@@ -214,17 +241,17 @@ class SerialTester:
 
         elif self.status == self.WAITING_DATA:
             if self.payloadLeft > 0:
-                self.dataBuffer += char
-                self.crc ^= ord(char)
+                self.dataBuffer += bytearray([char])
+                self.crc ^= char
                 self.payloadLeft -= 1
             if self.payloadLeft == 0:
                 self.status = self.WAITING_CRC
 
         elif self.status == self.WAITING_CRC:
-            if self.crc == ord(char):
+            if self.crc == char:
                 self.processMessage()
             else:
-                print "bad crc!", self.crc, ord(char)
+                print("bad crc!", self.crc, ord(char))
             self.status = self.WAITING_HEADER
 
 
@@ -235,15 +262,22 @@ if __name__ == "__main__":
         port = sys.argv[1]
     else:
         port = "/dev/ttyUSB0"
-    comm = SerialTester(port)
+    comm = SerialExposer(port)
+    comm.requestAll()
 
-    while len(comm.variables) == 0:
-        comm.packu8(comm.REQUEST_ALL)
-        comm.waitForMsg(comm.REQUEST_ALL, 0)
-
-    for key, value in comm.variables.iteritems():
-        print key, value
-    for index, var in comm.variables.iteritems():
+    try:
+        itera = comm.variables.iteritems()
+    except:
+        itera = comm.variables.items()
+    for key, value in itera:
+        print (key, value)
+    
+    try:
+        itera = comm.variables.iteritems()
+    except:
+        itera = comm.variables.items()
+    
+    for index, var in itera:
         name, vartype = var
         varRange = comm.testValues[vartype]
 
@@ -252,11 +286,11 @@ if __name__ == "__main__":
             comm.packu8(comm.READ, index, [0])
             received = comm.waitForMsg(comm.READ, index)
             if vartype != "_string":
-                print ((value - received) < 0.01), ", Type: ", vartype, "sent: ", value, "received: ", received, ", Bytes: ", comm.unpack(value, vartype)
+                print (((value - received) < 0.01), ", Type: ", vartype, "sent: ", value, "received: ", received, ", Bytes: ", comm.unpack(value, vartype))
                 if (value - received) > 0.01:
                     errors += 1
             else:
-                print value, received
+                print (value, received)
                 if value != received:
                     errors += 1
     exit(errors)
