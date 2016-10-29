@@ -17,5 +17,5 @@ before_install:
 script:
   - arduino --board arduino:avr:nano:cpu=atmega328 --pref build.path=$PWD/Exposer/build --verify $PWD/Exposer/Exposer.ino
   - sudo sh .travisScripts/start_simavr.sh
-  - sudo python Exposer/tester.py /tmp/simavr-uart0
+  - sudo python Exposer/python/exposer.py /tmp/simavr-uart0
   - sudo pkill -9 simduino.elf
